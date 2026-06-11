@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenCare - Aplikasi Pengelolaan Sampah Modern</title>
+    
+    <!-- 1. TAILWIND CSS: Membuat tampilan aplikasi rapi, indah, dan responsif secara instan -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. FONT AWESOME: Koleksi ikon keren (daun, piala, bintang emas, koin, sampah, dll.) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 3. CHART.JS: Pustaka grafik untuk membuat diagram lingkaran (Donut Chart) statistik sampah -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Konfigurasi warna kustom "eco" (hijau alam) di Tailwind agar bisa kita pakai di seluruh aplikasi
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        eco: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Menggunakan font modern 'Plus Jakarta Sans' agar teks nyaman dibaca anak sekolah */
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- NOTIFIKASI TOAST (Pemberitahuan Melayang di bawah kanan layar) -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <span id="toast-icon" class="text-eco-500"><i class="fas fa-star text-amber-400"></i></span>
+        <span id="toast-msg" class="text-sm font-medium">Notifikasi berhasil muncul!</span>
+    </div>
+
+    <!-- HEADER & NAVIGASI MENU UTAMA -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo Aplikasi -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-eco-500 text-white p-2.5 rounded-2xl shadow-lg shadow-eco-500/20 flex items-center justify-center">
+                        <i class="fas fa-leaf text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r bg-clip-text text-transparent from-eco-600 to-emerald-800">GreenCare</span>
+                        <span class="hidden sm:inline-block text-[10px] bg-eco-100 text-eco-800 font-semibold px-2 py-0.5 rounded-full ml-2">Eco-School v2.5</span>
+                    </div>
+                </div>
+                
+                <!-- Navigasi Desktop (Untuk layar besar komputer/tablet) -->
+                <nav class="hidden lg:flex space-x-1 items-center">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-eco-600 bg-eco-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('piket')" id="nav-piket" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-star text-amber-500"></i> <span>Piket & Beri Bintang</span>
+                    </button>
+                    <button onclick="switchTab('tambah')" id="nav-tambah" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-plus-circle"></i> <span>Catat Sampah</span>
+                    </button>
+                    <button onclick="switchTab('riwayat')" id="nav-riwayat" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-history"></i> <span>Riwayat</span>
+                    </button>
+                    <button onclick="switchTab('hadiah')" id="nav-hadiah" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-gift"></i> <span>Tukar Poin</span>
+                    </button>
+                    <button onclick="switchTab('edukasi')" id="nav-edukasi" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-book-open"></i> <span>Tips Edukasi</span>
+                    </button>
+                    <button onclick="switchTab('kuis')" id="nav-kuis" class="tab-btn px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-eco-600 hover:bg-gray-50 transition-all flex items-center space-x-2">
+                        <i class="fas fa-gamepad"></i> <span>Kuis</span>
+                    </button>
+                </nav>
+                
+                <!-- Tampilan Akumulasi Poin Global Akun Pengguna -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-1.5 rounded-full flex items-center space-x-2 text-sm font-bold shadow-sm">
+                        <i class="fas fa-coins text-amber-500 animate-pulse"></i>
+                        <span id="user-points">250</span> <span class="text-xs text-amber-600 font-medium">Poin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigasi Mobile -->
+        <div class="lg:hidden bg-gray-50 border-t border-gray-100 flex overflow-x-auto px-4 py-2 space-x-2 scrollbar-none">
+            <button onclick="switchTab('dashboard')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap bg-eco-500 text-white" id="nav-m-dashboard">Dashboard</button>
+            <button onclick="switchTab('piket')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-piket">Piket & Bintang</button>
+            <button onclick="switchTab('tambah')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-tambah">Catat Sampah</button>
+            <button onclick="switchTab('riwayat')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-riwayat">Riwayat</button>
+            <button onclick="switchTab('hadiah')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-hadiah">Tukar Poin</button>
+            <button onclick="switchTab('edukasi')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-edukasi">Tips Edukasi</button>
+            <button onclick="switchTab('kuis')" class="tab-btn-m px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-gray-600" id="nav-m-kuis">Kuis</button>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA APLIKASI -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ==========================================
+             TAB 1: DASHBOARD
+             ========================================== -->
+        <section id="tab-dashboard" class="tab-content block space-y-6">
+            <!-- Banner Selamat Datang & Kartu Statistik -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div class="md:col-span-2 bg-gradient-to-r from-eco-600 to-emerald-800 text-white p-6 rounded-3xl shadow-xl flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-1">Halo, Pahlawan Lingkungan! 🌱</h2>
+                        <p class="text-eco-100 text-xs mb-6">Ayo bantu kumpulkan sampah sebanyak-banyaknya untuk mendapatkan bintang emas!</p>
+                    </div>
+                    <div class="flex items-end justify-between relative z-10">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider text-eco-200">Total Kontribusi Sekolah</p>
+                            <p class="text-3xl font-extrabold" id="dash-total-berat">0.0 kg</p>
+                        </div>
+                        <button onclick="switchTab('piket')" class="bg-white text-eco-700 hover:bg-eco-50 font-bold px-4 py-2 rounded-xl text-xs shadow-md transition-all flex items-center space-x-2">
+                            <i class="fas fa-star text-amber-500"></i> <span>Mulai Piket</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistik Sampah Organik -->
+                <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <div class="bg-blue-50 text-blue-600 p-3 rounded-2xl">
+                            <i class="fas fa-recycle text-lg"></i>
+                        </div>
+                        <span class="text-[10px] bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">Organik</span>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-xs text-gray-400 font-medium">Sampah Organik</p>
+                        <p class="text-2xl font-bold text-gray-800" id="dash-organik">0.0 kg</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Pupuk kompos, biogas, pakan</p>
+                    </div>
+                </div>
+
+                <!-- Statistik Sampah Anorganik -->
+                <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <div class="bg-yellow-50 text-yellow-600 p-3 rounded-2xl">
+                            <i class="fas fa-box text-lg"></i>
+                        </div>
+                        <span class="text-[10px] bg-yellow-100 text-yellow-800 font-semibold px-2 py-0.5 rounded-full">Anorganik</span>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-xs text-gray-400 font-medium">Sampah Anorganik</p>
+                        <p class="text-2xl font-bold text-gray-800" id="dash-anorganik">0.0 kg</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Dapat didaur ulang kembali</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analisis Grafik & Aktivitas Terakhir -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Grafik Diagram Donat -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-base mb-1">Distribusi Sampah</h3>
+                        <p class="text-xs text-gray-400 mb-4">Persentase jenis sampah yang terkumpul.</p>
+                    </div>
+                    <div class="relative w-full h-52 flex items-center justify-center">
+                        <canvas id="wasteChart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 text-center mt-4 pt-4 border-t border-gray-50 text-[10px]">
+                        <div>
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>
+                            <span class="text-gray-500">Organik</span>
+                        </div>
+                        <div>
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></span>
+                            <span class="text-gray-500">Anorganik</span>
+                        </div>
+                        <div>
+                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 mr-1"></span>
+                            <span class="text-gray-500">B3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daftar Aktivitas Terbaru -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-base mb-1">Aktivitas Terakhir</h3>
+                                <p class="text-xs text-gray-400">Catatan piket dan setoran sampah terbaru.</p>
+                            </div>
+                            <button onclick="switchTab('riwayat')" class="text-eco-600 hover:text-eco-700 text-xs font-semibold flex items-center space-x-1">
+                                <span>Lihat Semua</span> <i class="fas fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div id="recent-logs-container" class="space-y-3">
+                            <!-- JS memasukkan log penimbangan di sini -->
+                        </div>
+                    </div>
+                    <div class="bg-eco-50/50 p-4 rounded-2xl border border-eco-100/50 flex items-center space-x-3 mt-4">
+                        <span class="text-xl text-eco-600"><i class="fas fa-lightbulb"></i></span>
+                        <p class="text-xs text-eco-800 leading-relaxed">
+                            <strong>Fakta Hari Ini:</strong> Memilah sampah di sekolah melatih kedisiplinan dan menjaga lingkungan belajar tetap segar dan sehat!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 2: PIKET KEHADIRAN & BERI BINTANG ⭐
+             ========================================== -->
+        <section id="tab-piket" class="tab-content hidden space-y-6">
+            
+            <!-- KARTU SOROTAN: RAJA/RATU BINTANG KELAS ⭐ 👑 -->
+            <div id="champion-card" class="bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-500 text-white p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white/20 p-4 rounded-2xl text-4xl animate-bounce">
+                        👑
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-extrabold bg-white/20 px-3 py-1 rounded-full">Raja / Ratu Bintang Terbanyak ⭐</span>
+                        <h2 id="star-king-name" class="text-2xl font-extrabold mt-1">Siswa Terajin</h2>
+                        <p class="text-xs text-amber-50">Siswa yang paling banyak mengangkat sampah dan mengumpulkan bintang emas!</p>
+                    </div>
+                </div>
+                <div class="text-center sm:text-right">
+                    <span class="text-xs text-amber-100 font-bold block">Koleksi Bintang</span>
+                    <span id="star-king-count" class="text-4xl font-black">⭐ 0 Bintang</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- SISI KIRI: Panel Formulir Dual Tab (Absen Piket VS Beri Bintang Langsung) -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden lg:col-span-1">
+                    <!-- Toggle Switch Form -->
+                    <div class="flex border-b border-gray-100">
+                        <button onclick="togglePiketForm('absen')" id="btn-tab-absen" class="w-1/2 py-4 text-xs font-bold text-eco-600 border-b-2 border-eco-500 bg-eco-50/30 transition-all">
+                            <i class="fas fa-calendar-check mr-1"></i> Absen Piket
+                        </button>
+                        <button onclick="togglePiketForm('bintang')" id="btn-tab-bintang" class="w-1/2 py-4 text-xs font-bold text-gray-400 border-b-2 border-transparent hover:text-eco-600 transition-all">
+                            <i class="fas fa-magic mr-1"></i> Beri Bintang ⭐
+                        </button>
+                    </div>
+
+                    <!-- FORM A: Absen Piket Tradisional -->
+                    <div id="piket-absen-form-wrapper" class="p-6 space-y-4">
+                        <div class="pb-1">
+                            <h4 class="font-bold text-gray-800 text-sm">Absen Piket Harian</h4>
+                            <p class="text-[10px] text-gray-400">Catat kehadiran piket dan timbangan sampah otomatis.</p>
+                        </div>
+                        <form id="form-piket" onsubmit="handlePiketSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Pilih Siswa</label>
+                                <select id="piket-siswa" required class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                    <!-- Diisi otomatis dari JS -->
+                                </select>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Tanggal</label>
+                                    <input type="date" id="piket-tanggal" required class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
+                                    <select id="piket-status" class="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                        <option value="Hadir">Hadir (Bertugas)</option>
+                                        <option value="Sakit">Sakit</option>
+                                        <option value="Izin">Izin</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Jenis Sampah yang Diangkut</label>
+                                <select id="piket-jenis-sampah-spesifik" onchange="calculatePiketPotentialPoints()" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eco-500 focus:outline-none select-sampah-template">
+                                    <!-- Opsi sampah dimuat oleh JS -->
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Berat Sampah (kg)</label>
+                                <div class="relative">
+                                    <input type="number" id="piket-sampah-berat" oninput="calculatePiketPotentialPoints()" step="0.1" min="0" placeholder="Biarkan 0 jika tidak mengangkut" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                    <span class="absolute right-4 top-3 text-xs text-gray-400 font-bold">KG</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 flex items-center justify-between text-xs">
+                                <span class="text-amber-900 font-bold flex items-center gap-1">
+                                    <i class="fas fa-star text-amber-500 animate-pulse"></i> Estimasi Bintang Baru:
+                                </span>
+                                <span id="piket-potensi-poin" class="font-black text-amber-700 text-sm">⭐ 0 Bintang</span>
+                            </div>
+
+                            <button type="submit" class="w-full py-3 bg-eco-600 hover:bg-eco-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center space-x-2">
+                                <i class="fas fa-save"></i> <span>Simpan Absensi Piket</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- FORM B: Beri Bintang Penghargaan Langsung (Fitur baru buatan Kakak!) -->
+                    <div id="piket-bintang-form-wrapper" class="p-6 space-y-4 hidden">
+                        <div class="pb-1">
+                            <h4 class="font-bold text-gray-800 text-sm">Beri Bintang Penghargaan ⭐</h4>
+                            <p class="text-[10px] text-gray-400">Berikan bintang penghargaan kepada siswa atas inisiatif baiknya.</p>
+                        </div>
+                        <form id="form-beri-bintang" onsubmit="handleBeriBintangDirect(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Siswa Penerima Penghargaan</label>
+                                <select id="give-siswa-id" required class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                    <!-- Diisi otomatis oleh JS -->
+                                </select>
+                            </div>
+
+                            <!-- Clickable Star Selector -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Jumlah Bintang yang Diberikan</label>
+                                <div class="flex items-center space-x-3 bg-amber-50/50 p-3 rounded-2xl border border-amber-100 justify-center">
+                                    <button type="button" onclick="selectAppreciationStars(1)" class="star-appr text-3xl text-amber-400 transition-transform active:scale-125 focus:outline-none" data-value="1">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    <button type="button" onclick="selectAppreciationStars(2)" class="star-appr text-3xl text-amber-400 transition-transform active:scale-125 focus:outline-none" data-value="2">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    <button type="button" onclick="selectAppreciationStars(3)" class="star-appr text-3xl text-amber-400 transition-transform active:scale-125 focus:outline-none" data-value="3">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    <button type="button" onclick="selectAppreciationStars(4)" class="star-appr text-3xl text-gray-300 hover:text-amber-300 transition-transform active:scale-125 focus:outline-none" data-value="4">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    <button type="button" onclick="selectAppreciationStars(5)" class="star-appr text-3xl text-gray-300 hover:text-amber-300 transition-transform active:scale-125 focus:outline-none" data-value="5">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="appreciation-star-value" value="3">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Alasan Penghargaan</label>
+                                <input type="text" id="appreciation-reason" required placeholder="Contoh: Sangat rajin menyapu / Membantu angkat ember" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                            </div>
+
+                            <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/10 transition-all flex items-center justify-center space-x-2">
+                                <i class="fas fa-gift"></i> <span>Kirim Bintang Emas ⭐</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Formulir Tambah Pendaftaran Siswa Baru (Bawah Panel) -->
+                    <div class="border-t border-gray-100 p-6 bg-gray-50/50 space-y-3">
+                        <h4 class="font-bold text-gray-800 text-sm">Pendaftaran Anggota Siswa Baru</h4>
+                        <div class="flex gap-2">
+                            <input type="text" id="add-siswa-nama" placeholder="Nama Siswa..." class="w-1/2 px-3.5 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-eco-500 focus:outline-none bg-white">
+                            <select id="add-siswa-kelas" class="w-1/2 px-3 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-eco-500 focus:outline-none bg-white">
+                                <option value="7">Kelas 7</option>
+                                <option value="8">Kelas 8</option>
+                                <option value="9">Kelas 9</option>
+                                <option value="10">Kelas 10</option>
+                            </select>
+                        </div>
+                        <button onclick="registerSiswa()" class="w-full py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-xl text-xs font-bold transition-all">
+                            + Tambah Siswa Baru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SISI KANAN: Peringkat Siswa & Riwayat Aktivitas Piket -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Papan Peringkat (Leaderboard Bintang ⭐) -->
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-base">Papan Bintang Pahlawan Piket ⭐</h3>
+                                <p class="text-xs text-gray-400">Siswa berprestasi yang mengumpulkan bintang dari piket dan penghargaan khusus.</p>
+                            </div>
+                            
+                            <!-- FILTER KELAS AKTIF (7, 8, 9, 10) -->
+                            <div class="flex items-center space-x-2">
+                                <label for="filter-kelas-leaderboard" class="text-xs font-bold text-gray-400">Filter:</label>
+                                <select id="filter-kelas-leaderboard" onchange="renderLeaderboard()" class="px-3 py-1.5 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-eco-500 focus:outline-none font-bold text-gray-700 bg-gray-50">
+                                    <option value="Semua">Semua Kelas</option>
+                                    <option value="7">Kelas 7</option>
+                                    <option value="8">Kelas 8</option>
+                                    <option value="9">Kelas 9</option>
+                                    <option value="10">Kelas 10</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-xs text-gray-400 font-bold border-b border-gray-100 sticky top-0 bg-white z-10">
+                                        <th class="pb-2">Siswa</th>
+                                        <th class="pb-2">Kelas</th>
+                                        <th class="pb-2 text-center">Jumlah Piket</th>
+                                        <th class="pb-2 text-right">Koleksi Bintang</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="siswa-leaderboard-body" class="divide-y divide-gray-50 text-sm">
+                                    <!-- Daftar peringkat siswa dimuat di sini secara otomatis -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Buku Log Riwayat Piket Harian -->
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 text-base mb-3">Log Riwayat Piket & Penghargaan</h3>
+                        <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-xs text-gray-400 font-bold border-b border-gray-100">
+                                        <th class="pb-2">Tanggal</th>
+                                        <th class="pb-2">Siswa</th>
+                                        <th class="pb-2">Tugas / Catatan</th>
+                                        <th class="pb-2 text-right">Bintang (⭐)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="piket-history-body" class="divide-y divide-gray-50 text-xs text-gray-600">
+                                    <!-- Log kehadiran siswa dimuat di sini secara otomatis -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 3: CATAT SETORAN SAMPAH UMUM
+             ========================================== -->
+        <section id="tab-tambah" class="tab-content hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+                <div class="bg-eco-600 p-6 text-white text-center relative">
+                    <h2 class="text-xl font-bold">Catat Setoran Sampah Umum</h2>
+                    <p class="text-eco-100 text-xs mt-1">Pilahlah sampah Anda dari rumah demi mempermudah daur ulang.</p>
+                </div>
+                <form id="form-sampah" class="p-6 sm:p-8 space-y-5" onsubmit="handleFormSubmit(event)">
+                    <!-- Pemilihan Jenis Sampah Detail -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pilih Jenis Sampah Spesifik</label>
+                        <select id="pilih-jenis-sampah-spesifik" required onchange="calculatePotentialPoints()" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-eco-500 focus:border-eco-500 transition-all text-sm select-sampah-template">
+                            <!-- Menu pilihan jenis sampah otomatis dari JS -->
+                        </select>
+                    </div>
+
+                    <!-- Input Berat & Tanggal -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Berat Estimasi (kg)</label>
+                            <div class="relative">
+                                <input type="number" id="input-berat" step="0.1" min="0.1" required placeholder="Contoh: 1.5" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-eco-500 focus:border-eco-500 transition-all text-sm">
+                                <span class="absolute right-4 top-3.5 text-xs text-gray-400 font-bold">KG</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tanggal Penimbangan</label>
+                            <input type="date" id="input-tanggal" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-eco-500 focus:border-eco-500 transition-all text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Catatan/Deskripsi Tambahan -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Catatan Tambahan (Opsional)</label>
+                        <input type="text" id="input-deskripsi" placeholder="Contoh: Titipan botol dari kantin sekolah" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-eco-500 focus:border-eco-500 transition-all text-sm">
+                    </div>
+
+                    <!-- Info Poin Potensial -->
+                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="text-amber-500 text-lg"><i class="fas fa-star animate-spin"></i></span>
+                            <div>
+                                <h4 class="text-xs font-bold text-amber-900">Perhitungan Poin Hadiah Otomatis</h4>
+                                <p class="text-[10px] text-amber-700" id="info-kategori-terpilih">Kategori: Anorganik | 15 Poin/kg</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-bold text-amber-800" id="potensi-poin">+ 0 Poin</span>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Form -->
+                    <div class="flex space-x-3 pt-2">
+                        <button type="button" onclick="switchTab('dashboard')" class="w-1/3 py-3.5 border border-gray-200 text-gray-500 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit" class="w-2/3 py-3.5 bg-eco-600 hover:bg-eco-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-eco-600/20 transition-all flex items-center justify-center space-x-2">
+                            <i class="fas fa-check-circle"></i> <span>Simpan & Dapatkan Poin</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 4: RIWAYAT SETORAN SAMPAH
+             ========================================== -->
+        <section id="tab-riwayat" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <!-- Kontrol Penyaringan & Cari Data -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Riwayat Setoran Sampah</h2>
+                        <p class="text-xs text-gray-400">Kelola dan pantau seluruh catatan kontribusi ekologi Anda.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2.5">
+                        <select id="filter-jenis" onchange="filterAndRenderHistory()" class="px-3.5 py-2 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-eco-500 focus:outline-none">
+                            <option value="Semua">Semua Kategori</option>
+                            <option value="Organik">Organik</option>
+                            <option value="Anorganik">Anorganik</option>
+                            <option value="B3">B3</option>
+                        </select>
+                        <input type="text" id="cari-riwayat" oninput="filterAndRenderHistory()" placeholder="Cari deskripsi..." class="px-3.5 py-2 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-eco-500 focus:outline-none w-48">
+                    </div>
+                </div>
+
+                <!-- Tabel Riwayat -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                                <th class="pb-3 pl-4">Tanggal</th>
+                                <th class="pb-3">Kategori</th>
+                                <th class="pb-3">Deskripsi / Item</th>
+                                <th class="pb-3">Berat (kg)</th>
+                                <th class="pb-3 text-right pr-4">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-history-body" class="divide-y divide-gray-50 text-sm">
+                            <!-- Dimuat dinamis oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Box Kosong (Tampil jika pencarian tidak ditemukan) -->
+                <div id="riwayat-empty" class="hidden text-center py-12">
+                    <span class="text-5xl text-gray-200"><i class="fas fa-folder-open"></i></span>
+                    <p class="text-sm font-medium text-gray-400 mt-4">Belum ada catatan sampah yang sesuai kriteria.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 5: TOKO PENUKARAN REWARDS POIN
+             ========================================== -->
+        <section id="tab-hadiah" class="tab-content hidden space-y-6">
+            <div class="text-center max-w-xl mx-auto space-y-2 mb-8">
+                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Toko Penukaran</span>
+                <h2 class="text-2xl font-bold text-gray-800">Tukarkan Poin dengan Hadiah Menarik</h2>
+                <p class="text-xs text-gray-400">Kerja keras Anda memilah sampah patut dihargai. Pilih hadiah lingkungan atau voucer belanja yang Anda inginkan!</p>
+            </div>
+
+            <!-- Grid Wadah Voucher Hadiah -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="rewards-container">
+                <!-- Kartu Hadiah dimuat dinamis oleh JavaScript -->
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 6: EDUKASI TIPS PRAKTIS DAUR ULANG
+             ========================================== -->
+        <section id="tab-edukasi" class="tab-content hidden space-y-8">
+            <div class="text-center max-w-xl mx-auto space-y-2 mb-4">
+                <span class="bg-eco-100 text-eco-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Edukasi Eco</span>
+                <h2 class="text-2xl font-bold text-gray-800">Panduan Praktis Daur Ulang</h2>
+                <p class="text-xs text-gray-400">Pelajari cara yang benar dalam memperlakukan setiap kelompok sampah agar bermanfaat.</p>
+            </div>
+
+            <!-- 3 Kategori Edukasi Utama -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Edukasi Organik -->
+                <div class="bg-white rounded-3xl border border-emerald-100 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-emerald-600 p-5 text-white flex items-center space-x-3">
+                        <span class="text-2xl"><i class="fas fa-leaf"></i></span>
+                        <div>
+                            <h3 class="font-bold text-base leading-tight">Sampah Organik</h3>
+                            <span class="text-[10px] opacity-85">Dekomposisi Alami</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4 flex-grow">
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-emerald-600 tracking-wider">Contoh Item</span>
+                            <p class="text-xs text-gray-600">Sisa makanan, sisa sayuran, kulit buah, potongan rumput, daun kering.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-emerald-600 tracking-wider">Metode Pengolahan</span>
+                            <ul class="list-disc pl-4 text-xs text-gray-600 space-y-1.5">
+                                <li><strong>Kompos:</strong> Masukkan wadah kompos untuk dijadikan pupuk tanaman alami.</li>
+                                <li><strong>Eco-Enzyme:</strong> Fermentasikan sisa kulit buah menjadi cairan pembersih serbaguna.</li>
+                                <li><strong>Pakan Maggot:</strong> Berikan sisa makanan untuk budidaya larva ulat BSF.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 px-6 py-4 border-t border-emerald-100/50 flex justify-between items-center text-xs font-semibold text-emerald-800">
+                        <span>Poin per Kg: 10 Poin</span>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- Edukasi Anorganik -->
+                <div class="bg-white rounded-3xl border border-amber-100 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-amber-500 p-5 text-white flex items-center space-x-3">
+                        <span class="text-2xl"><i class="fas fa-wine-bottle"></i></span>
+                        <div>
+                            <h3 class="font-bold text-base leading-tight">Sampah Anorganik</h3>
+                            <span class="text-[10px] opacity-85">Daur Ulang Mekanis</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4 flex-grow">
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-amber-600 tracking-wider">Contoh Item</span>
+                            <p class="text-xs text-gray-600">Botol air mineral, botol soda, gelas & kantong plastik, kardus, kertas, kaleng minuman, besi bekas, kaca.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-amber-600 tracking-wider">Metode Pengolahan</span>
+                            <ul class="list-disc pl-4 text-xs text-gray-600 space-y-1.5">
+                                <li><strong>Pembersihan:</strong> Cuci wadah bekas agar bersih dari sisa cairan sebelum disalurkan.</li>
+                                <li><strong>Kreasi Upcycling:</strong> Ubah botol menjadi pot gantung atau wadah pensil estetik.</li>
+                                <li><strong>Bank Sampah:</strong> Kumpulkan kardus & kaleng rapi untuk dijual kembali ke pengepul.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 px-6 py-4 border-t border-amber-100/50 flex justify-between items-center text-xs font-semibold text-amber-800">
+                        <span>Poin per Kg: 15 Poin</span>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- Edukasi B3 -->
+                <div class="bg-white rounded-3xl border border-rose-100 overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-rose-600 p-5 text-white flex items-center space-x-3">
+                        <span class="text-2xl"><i class="fas fa-radiation"></i></span>
+                        <div>
+                            <h3 class="font-bold text-base leading-tight">Bahan Berbahaya (B3)</h3>
+                            <span class="text-[10px] opacity-85">Penanganan Khusus</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4 flex-grow">
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-rose-600 tracking-wider">Contoh Item</span>
+                            <p class="text-xs text-gray-600">Baterai bekas, lampu LED, wadah semprotan parfum aerosol, oli mesin.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase text-rose-600 tracking-wider">Metode Pengolahan</span>
+                            <ul class="list-disc pl-4 text-xs text-gray-600 space-y-1.5">
+                                <li><strong>Wadah Terpisah:</strong> Jangan pernah mencampurnya dengan sampah biasa.</li>
+                                <li><strong>Segel Aman:</strong> Rekatkan ujung baterai dengan selotip agar tidak memicu reaksi korsleting.</li>
+                                <li><strong>Drop-off Point:</strong> Serahkan ke pihak tempat pembuangan khusus B3 terdekat.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-rose-50 px-6 py-4 border-t border-rose-100/50 flex justify-between items-center text-xs font-semibold text-rose-800">
+                        <span>Poin per Kg: 5 Poin</span>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 7: MINI GAME KUIS ECO CHALLENGE
+             ========================================== -->
+        <section id="tab-kuis" class="tab-content hidden max-w-xl mx-auto space-y-6">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl overflow-hidden relative">
+                <!-- Tampilan Awal Kuis -->
+                <div id="quiz-start-screen" class="text-center space-y-5 py-6">
+                    <div class="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-inner text-3xl">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-bold text-gray-800">Tantangan Kuis Eco-Trash 🧠</h2>
+                        <p class="text-xs text-gray-500 px-4">Uji pengetahuan lingkunganmu! Dapatkan tambahan bonus <strong>20 Poin</strong> setiap kali berhasil menjawab seluruh pertanyaan dengan benar.</p>
+                    </div>
+                    <button onclick="startQuiz()" class="px-6 py-3 bg-eco-600 hover:bg-eco-700 text-white font-bold rounded-2xl text-xs shadow-lg shadow-eco-600/20 transition-all inline-flex items-center space-x-2">
+                        <span>Mulai Kuis Sekarang</span> <i class="fas fa-play text-[10px]"></i>
+                    </button>
+                </div>
+
+                <!-- Area Pertanyaan Kuis Berlangsung -->
+                <div id="quiz-play-screen" class="hidden space-y-6">
+                    <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div id="quiz-progress" class="bg-eco-500 h-full w-1/3 transition-all duration-300"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold text-eco-600 tracking-wider">KUIS INTELILINGKUNGAN</span>
+                            <span id="quiz-counter" class="text-xs text-gray-400 font-semibold">1 dari 3</span>
+                        </div>
+                        <h3 id="quiz-question-text" class="text-base font-bold text-gray-800 leading-snug">Memilah sampah organik dan anorganik sebaiknya dilakukan di mana?</h3>
+                    </div>
+                    <div class="space-y-2.5" id="quiz-options-container">
+                        <!-- Opsi jawaban tombol A, B, C, D diisi oleh JS -->
+                    </div>
+                </div>
+
+                <!-- Hasil Skor Akhir Kuis -->
+                <div id="quiz-result-screen" class="hidden text-center space-y-5 py-6">
+                    <div id="quiz-result-icon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-inner text-3xl"></div>
+                    <div class="space-y-2">
+                        <h2 id="quiz-result-title" class="text-xl font-bold text-gray-800">Luar Biasa!</h2>
+                        <p id="quiz-result-desc" class="text-xs text-gray-500 px-4">Kamu berhasil menyelesaikan tantangan hari ini.</p>
+                    </div>
+                    <div class="flex justify-center space-x-3">
+                        <button onclick="resetQuiz()" class="px-4 py-2.5 border border-gray-200 text-gray-500 font-bold rounded-xl text-xs hover:bg-gray-50 transition-all">
+                            Coba Lagi
+                        </button>
+                        <button onclick="switchTab('dashboard')" class="px-5 py-2.5 bg-eco-600 hover:bg-eco-700 text-white font-bold rounded-xl text-xs transition-all">
+                            Kembali ke Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Kaki Halaman (Footer) -->
+    <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-eco-500 text-white p-1.5 rounded-lg flex items-center justify-center text-xs">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <span class="text-sm font-semibold text-gray-700">GreenCare Indonesia</span>
+            </div>
+            <p class="text-[11px] text-gray-400">© 2026 GreenCare. Dirancang untuk masa depan bumi yang berkelanjutan.</p>
+        </div>
+    </footer>
+
+    <!-- =========================================================================
+         BRAIN OF THE APP: LOGIKA JAVASCRIPT
+         ========================================================================= -->
+    <script>
+        // DATABASE DAFTAR JENIS SAMPAH & ATURAN POINNYA
+        const itemSampahDatabase = {
+            "Sisa Makanan": { kategori: "Organik", poinPerKg: 10 },
+            "Daun Kering": { kategori: "Organik", poinPerKg: 10 },
+            "Sisa Sayuran": { kategori: "Organik", poinPerKg: 10 },
+            "Kulit Buah": { kategori: "Organik", poinPerKg: 10 },
+            
+            "Botol air mineral": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol minuman bersoda": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol jus": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol teh kemasan": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol sampo": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol sabun cair": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol deterjen": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol pembersih lantai": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol minyak goreng": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol plastik": { kategori: "Anorganik", poinPerKg: 15 },
+            "Gelas plastik": { kategori: "Anorganik", poinPerKg: 15 },
+            "Kantong plastik": { kategori: "Anorganik", poinPerKg: 15 },
+            "Kardus": { kategori: "Anorganik", poinPerKg: 15 },
+            "Kertas": { kategori: "Anorganik", poinPerKg: 15 },
+            "Kaleng minuman": { kategori: "Anorganik", poinPerKg: 15 },
+            "Besi bekas": { kategori: "Anorganik", poinPerKg: 15 },
+            "Aluminium": { kategori: "Anorganik", poinPerKg: 15 },
+            "Botol kaca": { kategori: "Anorganik", poinPerKg: 15 },
+            "Pecahan kaca": { kategori: "Anorganik", poinPerKg: 15 },
+            
+            "Baterai Bekas": { kategori: "B3", poinPerKg: 5 },
+            "Lampu LED/Bohlam": { kategori: "B3", poinPerKg: 5 },
+            "Oli Bekas": { kategori: "B3", poinPerKg: 5 },
+            "Wadah Aerosol": { kategori: "B3", poinPerKg: 5 }
+        };
+
+        // STATE UTAMA (Tempat Penyimpanan Data Sementara Selama Aplikasi Terbuka)
+        let appState = {
+            logs: [
+                { id: 1, jenis: 'Organik', berat: 3.5, deskripsi: 'Sisa Makanan (Piket Aris Dimara)', tanggal: '2026-06-08', poin: 35 },
+                { id: 2, jenis: 'Anorganik', berat: 2.2, deskripsi: 'Botol air mineral (Piket Charles Kabes)', tanggal: '2026-06-09', poin: 33 },
+                { id: 3, jenis: 'B3', berat: 0.5, deskripsi: 'Baterai Bekas (Piket Hengky Mayor)', tanggal: '2026-06-10', poin: 2.5 }
+            ],
+            points: 250,
+            rewards: [
+                { id: 101, nama: 'Sedotan Bambu Organik (Set isi 3)', poin: 50, icon: 'fa-wheat-awn', bg: 'from-amber-500 to-yellow-600', stok: 12 },
+                { id: 102, nama: 'Totebag Belanja Kanvas Ramah Lingkungan', poin: 80, icon: 'fa-bag-shopping', bg: 'from-teal-500 to-emerald-600', stok: 8 },
+                { id: 103, nama: 'Voucer Digital Minimarket Rp10.000', poin: 120, icon: 'fa-ticket-simple', bg: 'from-blue-500 to-indigo-600', stok: 20 },
+                { id: 104, nama: 'Donasi 1 Pohon untuk Hutan Mangrove', poin: 150, icon: 'fa-tree', bg: 'from-green-600 to-emerald-800', stok: 999 }
+            ],
+            
+            // DATABASE ANGGOTA SISWA (DIKELOMPOKKAN BERDASARKAN KELAS 7, 8, 9, DAN 10)
+            students: [
+                // === KELAS 7 ===
+                { id: 101, nama: 'Audea', kelas: '7', totalPiket: 3, totalSampah: 6.5, totalBintang: 6.5 },
+                { id: 102, nama: 'David', kelas: '7', totalPiket: 2, totalSampah: 4.2, totalBintang: 4.2 },
+                { id: 103, nama: 'Beto', kelas: '7', totalPiket: 4, totalSampah: 8.8, totalBintang: 8.8 },
+                { id: 104, nama: 'Brian', kelas: '7', totalPiket: 1, totalSampah: 2.0, totalBintang: 2.0 },
+                { id: 105, nama: 'Luis', kelas: '7', totalPiket: 3, totalSampah: 5.5, totalBintang: 5.5 },
+                { id: 106, nama: 'Hugo', kelas: '7', totalPiket: 2, totalSampah: 3.8, totalBintang: 3.8 },
+                { id: 107, nama: 'Naindes', kelas: '7', totalPiket: 4, totalSampah: 9.2, totalBintang: 9.2 },
+                { id: 108, nama: 'Uziel', kelas: '7', totalPiket: 2, totalSampah: 4.0, totalBintang: 4.0 },
+                { id: 109, nama: 'Mutiara A', kelas: '7', totalPiket: 3, totalSampah: 6.0, totalBintang: 6.0 },
+                { id: 110, nama: 'Delila', kelas: '7', totalPiket: 5, totalSampah: 11.5, totalBintang: 11.5 },
+                { id: 111, nama: 'Eliz', kelas: '7', totalPiket: 1, totalSampah: 1.5, totalBintang: 1.5 },
+                { id: 112, nama: 'Mutiara B', kelas: '7', totalPiket: 2, totalSampah: 3.5, totalBintang: 3.5 },
+                { id: 113, nama: 'Yuyun', kelas: '7', totalPiket: 3, totalSampah: 7.2, totalBintang: 7.2 },
+                { id: 114, nama: 'Mariane', kelas: '7', totalPiket: 4, totalSampah: 8.0, totalBintang: 8.0 },
+                { id: 115, nama: 'Marfel', kelas: '7', totalPiket: 2, totalSampah: 4.5, totalBintang: 4.5 },
+                { id: 116, nama: 'Adelfia', kelas: '7', totalPiket: 5, totalSampah: 12.0, totalBintang: 12.0 },
+
+                // === KELAS 8 ===
+                { id: 201, nama: 'Aris Dimara', kelas: '8', totalPiket: 5, totalSampah: 12.5, totalBintang: 12.5 },
+                { id: 202, nama: 'Charles Kabes', kelas: '8', totalPiket: 4, totalSampah: 8.2, totalBintang: 8.2 },
+                { id: 203, nama: 'Hengky Mayor', kelas: '8', totalPiket: 3, totalSampah: 6.0, totalBintang: 6.0 },
+                { id: 204, nama: 'Rio Dimara', kelas: '8', totalPiket: 4, totalSampah: 9.1, totalBintang: 9.1 },
+                { id: 205, nama: 'Mark Hara', kelas: '8', totalPiket: 3, totalSampah: 5.8, totalBintang: 5.8 },
+                { id: 206, nama: 'Donal Gaman', kelas: '8', totalPiket: 2, totalSampah: 4.5, totalBintang: 4.5 },
+                { id: 207, nama: 'Mira Sauyai', kelas: '8', totalPiket: 5, totalSampah: 11.3, totalBintang: 11.3 },
+                { id: 208, nama: 'Inggo Waropen', kelas: '8', totalPiket: 2, totalSampah: 3.2, totalBintang: 3.2 },
+                { id: 209, nama: 'Lohini Arwakon', kelas: '8', totalPiket: 3, totalSampah: 7.0, totalBintang: 7.0 },
+                { id: 210, nama: 'Feby Sauyai', kelas: '8', totalPiket: 4, totalSampah: 8.5, totalBintang: 8.5 },
+                { id: 211, nama: 'Olla Umpain', kelas: '8', totalPiket: 1, totalSampah: 2.0, totalBintang: 2.0 },
+                { id: 212, nama: 'Yukah Burdam', kelas: '8', totalPiket: 3, totalSampah: 5.0, totalBintang: 5.0 },
+
+                // === KELAS 9 ===
+                { id: 301, nama: 'Frams', kelas: '9', totalPiket: 4, totalSampah: 10.5, totalBintang: 10.5 },
+                { id: 302, nama: 'Elkanus', kelas: '9', totalPiket: 3, totalSampah: 7.2, totalBintang: 7.2 },
+                { id: 303, nama: 'Markus', kelas: '9', totalPiket: 5, totalSampah: 13.0, totalBintang: 13.0 },
+                { id: 304, nama: 'Bram', kelas: '9', totalPiket: 2, totalSampah: 4.0, totalBintang: 4.0 },
+                { id: 305, nama: 'Fanita', kelas: '9', totalPiket: 4, totalSampah: 9.5, totalBintang: 9.5 },
+                { id: 306, nama: 'Neta', kelas: '9', totalPiket: 3, totalSampah: 6.5, totalBintang: 6.5 },
+                { id: 307, nama: 'Lia', kelas: '9', totalPiket: 5, totalSampah: 11.0, totalBintang: 11.0 },
+                { id: 308, nama: 'Sari', kelas: '9', totalPiket: 2, totalSampah: 4.8, totalBintang: 4.8 },
+                { id: 309, nama: 'Marsya', kelas: '9', totalPiket: 3, totalSampah: 7.5, totalBintang: 7.5 },
+
+                // === KELAS 10 ===
+                { id: 401, nama: 'Niko', kelas: '10', totalPiket: 5, totalSampah: 14.5, totalBintang: 14.5 },
+                { id: 402, nama: 'Ledrik', kelas: '10', totalPiket: 3, totalSampah: 8.0, totalBintang: 8.0 },
+                { id: 403, nama: 'Alfaro', kelas: '10', totalPiket: 4, totalSampah: 11.2, totalBintang: 11.2 },
+                { id: 404, nama: 'Gerson', kelas: '10', totalPiket: 2, totalSampah: 5.5, totalBintang: 5.5 },
+                { id: 405, nama: 'Geby', kelas: '10', totalPiket: 4, totalSampah: 10.0, totalBintang: 10.0 },
+                { id: 406, nama: 'Jeni', kelas: '10', totalPiket: 3, totalSampah: 7.8, totalBintang: 7.8 },
+                { id: 407, nama: 'Ocah', kelas: '10', totalPiket: 1, totalSampah: 2.5, totalBintang: 2.5 },
+                { id: 408, nama: 'Sonia', kelas: '10', totalPiket: 5, totalSampah: 13.5, totalBintang: 13.5 },
+                { id: 409, nama: 'Mesli', kelas: '10', totalPiket: 2, totalSampah: 4.2, totalBintang: 4.2 },
+                { id: 410, nama: 'Paska', kelas: '10', totalPiket: 3, totalSampah: 6.8, totalBintang: 6.8 },
+                { id: 411, nama: 'Meri', kelas: '10', totalPiket: 4, totalSampah: 9.0, totalBintang: 9.0 }
+            ],
+            // Riwayat Log Piket & Penghargaan Bintang
+            attendanceLogs: [
+                { id: 1, tanggal: '2026-06-08', siswaId: 201, namaSiswa: 'Aris Dimara', kelas: '8', status: 'Hadir', sampahKilo: 3.5, deskripsi: 'Piket Harian - Sisa Makanan' },
+                { id: 2, tanggal: '2026-06-09', siswaId: 202, namaSiswa: 'Charles Kabes', kelas: '8', status: 'Hadir', sampahKilo: 2.2, deskripsi: 'Piket Harian - Botol air mineral' },
+                { id: 3, tanggal: '2026-06-10', siswaId: 203, namaSiswa: 'Hengky Mayor', kelas: '8', status: 'Hadir', sampahKilo: 0.5, deskripsi: 'Piket Harian - Baterai Bekas' }
+            ]
+        };
+
+        // Bank data pertanyaan kuis asah otak siswa
+        const kuisDatabase = [
+            {
+                pertanyaan: "Mana dari berikut ini yang termasuk kategori sampah anorganik yang bisa didaur ulang terus menerus?",
+                opsi: ["Kertas tisu bekas", "Botol kaca & kaleng aluminium", "Kemasan plastik saset kopi", "Kulit jeruk nipis"],
+                jawabanBenar: 1
+            },
+            {
+                pertanyaan: "Bagaimana cara terbaik memperlakukan baterai bekas (B3) sebelum dibuang?",
+                opsi: ["Dibakar agar muatan energinya hangus", "Dicuci bersih kemudian dimasukkan ke tong sampah organik", "Dilapisi selotip pada kutubnya dan dipisahkan dari sampah biasa", "Direndam air garam agar terurai"],
+                jawabanBenar: 2
+            },
+            {
+                pertanyaan: "Cairan hasil fermentasi kulit buah segar dan gula merah yang bermanfaat sebagai pembersih alami dinamakan...",
+                opsi: ["Eco-Enzyme", "Kompos Cair", "Bio-Etanol", "Minyak Jelantah"],
+                jawabanBenar: 0
+            }
+        ];
+
+        let kuisState = {
+            currentIndex: 0,
+            score: 0
+        };
+
+        let wasteChartInstance = null;
+
+        // FUNGSI INISIALISASI
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-tanggal').value = today;
+            document.getElementById('piket-tanggal').value = today;
+
+            if (localStorage.getItem('greencare_state_stars')) {
+                appState = JSON.parse(localStorage.getItem('greencare_state_stars'));
+            }
+
+            updateGlobalPointsDisplay();
+            buildWasteItemSelectors(); 
+            renderDashboard();
+            renderRewards();
+            initChart();
+            populateSiswaSelect();
+            renderLeaderboard();
+            renderPiketHistory();
+
+            document.getElementById('input-berat').addEventListener('input', calculatePotentialPoints);
+        };
+
+        function saveState() {
+            localStorage.setItem('greencare_state_stars', JSON.stringify(appState));
+        }
+
+        // MEMBUAT DROPDOWN PILIHAN SAMPAH DETAIL
+        function buildWasteItemSelectors() {
+            const selectTemplateHTML = `
+                <optgroup label="Sampah Organik (10 Poin/kg)">
+                    <option value="Sisa Makanan">Sisa Makanan</option>
+                    <option value="Daun Kering">Daun Kering</option>
+                    <option value="Sisa Sayuran">Sisa Sayuran</option>
+                    <option value="Kulit Buah">Kulit Buah</option>
+                </optgroup>
+                <optgroup label="Sampah Anorganik (15 Poin/kg)">
+                    <option value="Botol air mineral" selected>Botol air mineral</option>
+                    <option value="Botol minuman bersoda">Botol minuman bersoda</option>
+                    <option value="Botol jus">Botol jus</option>
+                    <option value="Botol teh kemasan">Botol teh kemasan</option>
+                    <option value="Botol sampo">Botol sampo</option>
+                    <option value="Botol sabun cair">Botol sabun cair</option>
+                    <option value="Botol deterjen">Botol deterjen</option>
+                    <option value="Botol pembersih lantai">Botol pembersih lantai</option>
+                    <option value="Botol minyak goreng">Botol minyak goreng</option>
+                    <option value="Botol plastik">Botol plastik</option>
+                    <option value="Gelas plastik">Gelas plastik</option>
+                    <option value="Kantong plastik">Kantong plastik</option>
+                    <option value="Kardus">Kardus</option>
+                    <option value="Kertas">Kertas</option>
+                    <option value="Kaleng minuman">Kaleng minuman</option>
+                    <option value="Besi bekas">Besi bekas</option>
+                    <option value="Aluminium">Aluminium</option>
+                    <option value="Botol kaca">Botol kaca</option>
+                    <option value="Pecahan kaca">Pecahan kaca</option>
+                </optgroup>
+                <optgroup label="Sampah B3 (5 Poin/kg)">
+                    <option value="Baterai Bekas">Baterai Bekas</option>
+                    <option value="Lampu LED/Bohlam">Lampu LED/Bohlam</option>
+                    <option value="Oli Bekas">Oli Bekas</option>
+                    <option value="Wadah Aerosol">Wadah Aerosol</option>
+                </optgroup>
+            `;
+
+            document.querySelectorAll('.select-sampah-template').forEach(selectEl => {
+                selectEl.innerHTML = selectTemplateHTML;
+            });
+
+            calculatePotentialPoints();
+            calculatePiketPotentialPoints();
+        }
+
+        // TAMPILKAN NOTIFIKASI MELAYANG (TOAST)
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-msg');
+
+            msg.innerText = message;
+            if (isSuccess) {
+                icon.innerHTML = '<i class="fas fa-star text-amber-500 text-lg animate-bounce"></i>';
+            } else {
+                icon.innerHTML = '<i class="fas fa-exclamation-circle text-rose-500 text-lg"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // ALIH TAB / HALAMAN
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('block');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) {
+                activeTab.classList.remove('hidden');
+                activeTab.classList.add('block');
+            }
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-eco-600', 'bg-eco-50', 'font-semibold');
+                btn.classList.add('text-gray-500', 'hover:text-eco-600', 'hover:bg-gray-50');
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-500', 'hover:text-eco-600', 'hover:bg-gray-50');
+                activeBtn.classList.add('text-eco-600', 'bg-eco-50', 'font-semibold');
+            }
+
+            document.querySelectorAll('.tab-btn-m').forEach(btn => {
+                btn.classList.remove('bg-eco-500', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+
+            const activeBtnM = document.getElementById(`nav-m-${tabId}`);
+            if (activeBtnM) {
+                activeBtnM.classList.remove('text-gray-600');
+                activeBtnM.classList.add('bg-eco-500', 'text-white');
+            }
+
+            if (tabId === 'dashboard') {
+                renderDashboard();
+                updateCharts();
+            } else if (tabId === 'piket') {
+                populateSiswaSelect();
+                renderLeaderboard();
+                renderPiketHistory();
+                selectAppreciationStars(3); // Reset star selector di awal tab
+            } else if (tabId === 'riwayat') {
+                filterAndRenderHistory();
+            } else if (tabId === 'hadiah') {
+                renderRewards();
+            }
+        }
+
+        function updateGlobalPointsDisplay() {
+            document.getElementById('user-points').innerText = appState.points;
+        }
+
+        // MENGHITUNG ESTIMASI POIN SETORAN UMUM
+        function calculatePotentialPoints() {
+            const berat = parseFloat(document.getElementById('input-berat').value) || 0;
+            const itemTerpilih = document.getElementById('pilih-jenis-sampah-spesifik').value;
+            const meta = itemSampahDatabase[itemTerpilih] || { kategori: "Anorganik", poinPerKg: 15 };
+
+            const poin = Math.round(berat * meta.poinPerKg);
+            document.getElementById('info-kategori-terpilih').innerText = `Kategori: ${meta.kategori} | ${meta.poinPerKg} Poin/kg`;
+            document.getElementById('potensi-poin').innerText = `+ ${poin} Poin`;
+        }
+
+        // MENGHITUNG ESTIMASI BINTANG UNTUK PIKET (1 kg = 1 Bintang ⭐)
+        function calculatePiketPotentialPoints() {
+            const berat = parseFloat(document.getElementById('piket-sampah-berat').value) || 0;
+            const bintang = berat.toFixed(1);
+            document.getElementById('piket-potensi-poin').innerText = `⭐ ${bintang} Bintang`;
+        }
+
+        // MENYIMPAN FORM SETORAN SAMPAH UMUM
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const itemTerpilih = document.getElementById('pilih-jenis-sampah-spesifik').value;
+            const berat = parseFloat(document.getElementById('input-berat').value);
+            const tanggal = document.getElementById('input-tanggal').value;
+            const catatanTambahan = document.getElementById('input-deskripsi').value.trim();
+
+            if (!berat || berat <= 0) {
+                showToast("Berat sampah harus lebih dari 0 kg!", false);
+                return;
+            }
+
+            const meta = itemSampahDatabase[itemTerpilih];
+            const poinDidapat = Math.round(berat * meta.poinPerKg);
+            const deskripsiLengkap = catatanTambahan 
+                ? `${itemTerpilih} (${catatanTambahan})` 
+                : `${itemTerpilih}`;
+
+            const newLog = {
+                id: Date.now(),
+                jenis: meta.kategori,
+                berat,
+                deskripsi: deskripsiLengkap,
+                tanggal,
+                poin: poinDidapat
+            };
+
+            appState.logs.unshift(newLog);
+            appState.points += poinDidapat;
+
+            saveState();
+            updateGlobalPointsDisplay();
+            showToast("Berhasil mencatat setoran sampah umum!");
+
+            document.getElementById('form-sampah').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-tanggal').value = today;
+            buildWasteItemSelectors();
+
+            switchTab('dashboard');
+        }
+
+        // ================= FITUR PIKET ECO: ABSENSI & SISWA =================
+
+        // Fungsi mengganti tampilan form antara Absen Piket dan Beri Bintang Langsung
+        function togglePiketForm(formType) {
+            const wrapperAbsen = document.getElementById('piket-absen-form-wrapper');
+            const wrapperBintang = document.getElementById('piket-bintang-form-wrapper');
+            const btnAbsen = document.getElementById('btn-tab-absen');
+            const btnBintang = document.getElementById('btn-tab-bintang');
+
+            if (formType === 'absen') {
+                wrapperAbsen.classList.remove('hidden');
+                wrapperBintang.classList.add('hidden');
+                btnAbsen.className = "w-1/2 py-4 text-xs font-bold text-eco-600 border-b-2 border-eco-500 bg-eco-50/30 transition-all";
+                btnBintang.className = "w-1/2 py-4 text-xs font-bold text-gray-400 border-b-2 border-transparent hover:text-eco-600 transition-all";
+            } else {
+                wrapperAbsen.classList.add('hidden');
+                wrapperBintang.classList.remove('hidden');
+                btnAbsen.className = "w-1/2 py-4 text-xs font-bold text-gray-400 border-b-2 border-transparent hover:text-eco-600 transition-all";
+                btnBintang.className = "w-1/2 py-4 text-xs font-bold text-eco-600 border-b-2 border-eco-500 bg-eco-50/30 transition-all";
+            }
+        }
+
+        // Fungsi memilih bintang di form apresiasi (Clickable stars)
+        function selectAppreciationStars(starCount) {
+            document.getElementById('appreciation-star-value').value = starCount;
+            const starButtons = document.querySelectorAll('.star-appr');
+            
+            starButtons.forEach((btn, idx) => {
+                if (idx < starCount) {
+                    btn.classList.add('text-amber-400');
+                    btn.classList.remove('text-gray-300');
+                } else {
+                    btn.classList.remove('text-amber-400');
+                    btn.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        // Mendaftarkan Siswa Baru ke dalam database
+        function registerSiswa() {
+            const namaInput = document.getElementById('add-siswa-nama');
+            const kelasSelect = document.getElementById('add-siswa-kelas');
+            const nama = namaInput.value.trim();
+            const kelas = kelasSelect.value;
+
+            if (!nama) {
+                showToast("Nama siswa wajib diisi!", false);
+                return;
+            }
+
+            const newSiswa = {
+                id: Date.now(),
+                nama: nama.charAt(0).toUpperCase() + nama.slice(1), // Merapikan huruf kapital awal nama
+                kelas: kelas,
+                totalPiket: 0,
+                totalSampah: 0.0,
+                totalBintang: 0.0
+            };
+
+            appState.students.push(newSiswa);
+            saveState();
+            
+            namaInput.value = '';
+            
+            populateSiswaSelect();
+            renderLeaderboard();
+            showToast(`Siswa "${newSiswa.nama}" Kelas ${kelas} berhasil didaftarkan!`);
+        }
+
+        // Menampilkan nama siswa kelas 8 di dropdown pilihan (Dikelompokkan berdasarkan Kelas)
+        function populateSiswaSelect() {
+            const selectEl = document.getElementById('piket-siswa');
+            const selectGiveEl = document.getElementById('give-siswa-id');
+            
+            const defaultOptionHTML = '<option value="" disabled selected>-- Pilih Siswa --</option>';
+            selectEl.innerHTML = defaultOptionHTML;
+            selectGiveEl.innerHTML = defaultOptionHTML;
+            
+            // Urutkan siswa berdasarkan Kelas dahulu, kemudian nama abjad A-Z
+            const sortedStudents = [...appState.students].sort((a, b) => {
+                if (parseInt(a.kelas) !== parseInt(b.kelas)) {
+                    return parseInt(a.kelas) - parseInt(b.kelas);
+                }
+                return a.nama.localeCompare(b.nama);
+            });
+
+            // Menyusun menu dropdown agar dikelompokkan per kelas (7, 8, 9, 10)
+            const classes = ['7', '8', '9', '10'];
+            classes.forEach(c => {
+                const optGroup1 = document.createElement('optgroup');
+                optGroup1.label = `Kelas ${c}`;
+                
+                const optGroup2 = document.createElement('optgroup');
+                optGroup2.label = `Kelas ${c}`;
+                
+                const classStudents = sortedStudents.filter(s => s.kelas === c);
+                classStudents.forEach(siswa => {
+                    const opt1 = document.createElement('option');
+                    opt1.value = siswa.id;
+                    opt1.innerText = siswa.nama;
+                    optGroup1.appendChild(opt1);
+
+                    const opt2 = document.createElement('option');
+                    opt2.value = siswa.id;
+                    opt2.innerText = siswa.nama;
+                    optGroup2.appendChild(opt2);
+                });
+                
+                if (classStudents.length > 0) {
+                    selectEl.appendChild(optGroup1);
+                    selectGiveEl.appendChild(optGroup2);
+                }
+            });
+        }
+
+        // Menyimpan piket kehadiran & membagikan Bintang emas ⭐
+        function handlePiketSubmit(event) {
+            event.preventDefault();
+
+            const siswaId = parseInt(document.getElementById('piket-siswa').value);
+            const tanggal = document.getElementById('piket-tanggal').value;
+            const status = document.getElementById('piket-status').value;
+            const sampahBerat = parseFloat(document.getElementById('piket-sampah-berat').value) || 0;
+            const itemTerpilih = document.getElementById('piket-jenis-sampah-spesifik').value;
+
+            if (!siswaId) {
+                showToast("Pilih siswa terlebih dahulu!", false);
+                return;
+            }
+
+            const siswa = appState.students.find(s => s.id === siswaId);
+            if (!siswa) return;
+
+            const meta = itemSampahDatabase[itemTerpilih];
+
+            // Tambahkan data kehadiran
+            const attendanceNew = {
+                id: Date.now(),
+                tanggal,
+                siswaId,
+                namaSiswa: siswa.nama,
+                kelas: siswa.kelas,
+                status,
+                sampahKilo: sampahBerat,
+                deskripsi: `Piket Harian - ${itemTerpilih}`
+            };
+
+            appState.attendanceLogs.unshift(attendanceNew);
+
+            if (status === 'Hadir') {
+                siswa.totalPiket += 1;
+                siswa.totalSampah += sampahBerat;
+                
+                // Tambahkan Bintang (1 kg sampah = 1 Bintang emas ⭐)
+                siswa.totalBintang += sampahBerat;
+
+                if (sampahBerat > 0) {
+                    const poinPiket = Math.round(sampahBerat * meta.poinPerKg);
+
+                    // Catat ke log sampah umum juga
+                    const mainLogNew = {
+                        id: Date.now() + 1,
+                        jenis: meta.kategori,
+                        berat: sampahBerat,
+                        deskripsi: `Piket Eco (${siswa.nama}) - ${itemTerpilih}`,
+                        tanggal: tanggal,
+                        poin: poinPiket
+                    };
+                    appState.logs.unshift(mainLogNew);
+                    appState.points += poinPiket;
+                }
+            }
+
+            saveState();
+            updateGlobalPointsDisplay();
+            renderLeaderboard();
+            renderPiketHistory();
+            
+            // Reset Form Piket
+            document.getElementById('form-piket').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('piket-tanggal').value = today;
+            document.getElementById('piket-status').value = 'Hadir';
+            buildWasteItemSelectors();
+
+            showToast(`Kehadiran disimpan! ${siswa.nama} mendapat ⭐ ${sampahBerat.toFixed(1)} Bintang!`);
+        }
+
+        // FUNGSI BARU: Mengirim Bintang Penghargaan Secara Langsung
+        function handleBeriBintangDirect(event) {
+            event.preventDefault();
+
+            const siswaId = parseInt(document.getElementById('give-siswa-id').value);
+            const starsToGive = parseFloat(document.getElementById('appreciation-star-value').value);
+            const reason = document.getElementById('appreciation-reason').value.trim();
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!siswaId) {
+                showToast("Pilih siswa terlebih dahulu!", false);
+                return;
+            }
+
+            if (!reason) {
+                showToast("Alasan penghargaan wajib diisi!", false);
+                return;
+            }
+
+            const siswa = appState.students.find(s => s.id === siswaId);
+            if (!siswa) return;
+
+            // Update total bintang siswa
+            siswa.totalBintang += starsToGive;
+
+            // Catat ke log riwayat aktivitas piket & penghargaan
+            const awardLog = {
+                id: Date.now(),
+                tanggal: today,
+                siswaId: siswa.id,
+                namaSiswa: siswa.nama,
+                kelas: siswa.kelas,
+                status: 'Penghargaan', // Menandai ini adalah penghargaan langsung
+                sampahKilo: starsToGive,
+                deskripsi: `Penghargaan: ${reason}`
+            };
+
+            appState.attendanceLogs.unshift(awardLog);
+            saveState();
+
+            // Refresh tampilan
+            renderLeaderboard();
+            renderPiketHistory();
+
+            // Reset form
+            document.getElementById('form-beri-bintang').reset();
+            selectAppreciationStars(3); // Kembali ke default 3 bintang
+
+            showToast(`Sukses memberikan ⭐ ${starsToGive} Bintang kepada ${siswa.nama}!`);
+        }
+
+        // MERENDER PAPAN PERINGKAT BINTANG ⭐ (Dengan fitur filter kelas)
+        function renderLeaderboard() {
+            const body = document.getElementById('siswa-leaderboard-body');
+            const filterKelas = document.getElementById('filter-kelas-leaderboard').value;
+            body.innerHTML = '';
+
+            // Saring siswa berdasarkan kelas yang dipilih
+            let filteredSiswa = [...appState.students];
+            if (filterKelas !== 'Semua') {
+                filteredSiswa = filteredSiswa.filter(s => s.kelas === filterKelas);
+            }
+
+            // Urutkan siswa dari bintang terbanyak ke yang paling sedikit
+            filteredSiswa.sort((a, b) => b.totalBintang - a.totalBintang);
+
+            // Tampilkan Sang Juara 1 dari filter aktif di kartu sorotan paling atas
+            if (filteredSiswa.length > 0) {
+                const king = filteredSiswa[0];
+                document.getElementById('star-king-name').innerText = `🏆 ${king.nama}`;
+                document.getElementById('star-king-count').innerText = `⭐ ${king.totalBintang.toFixed(1)} Bintang (Kelas ${king.kelas})`;
+            } else {
+                document.getElementById('star-king-name').innerText = `Belum Ada Siswa`;
+                document.getElementById('star-king-count').innerText = `⭐ 0 Bintang`;
+            }
+
+            filteredSiswa.forEach((siswa, index) => {
+                let medal = '';
+                if (index === 0) medal = '🥇 ';
+                else if (index === 1) medal = '🥈 ';
+                else if (index === 2) medal = '🥉 ';
+
+                // Menggambar deretan ikon bintang emas visual (maksimal 5 ikon bintang digambar, sisanya ditulis +angka)
+                let starIconsHTML = '';
+                const jumlahBintangBulat = Math.floor(siswa.totalBintang);
+                
+                if (jumlahBintangBulat === 0) {
+                    starIconsHTML = '<span class="text-gray-300 text-xs">Belum ada bintang</span>';
+                } else if (jumlahBintangBulat <= 5) {
+                    for (let i = 0; i < jumlahBintangBulat; i++) {
+                        starIconsHTML += '<i class="fas fa-star text-amber-400 text-xs mr-0.5 animate-pulse"></i>';
+                    }
+                    if (siswa.totalBintang % 1 !== 0) {
+                        starIconsHTML += '<i class="fas fa-star-half text-amber-400 text-xs mr-0.5"></i>';
+                    }
+                } else {
+                    starIconsHTML = `
+                        <i class="fas fa-star text-amber-400 text-xs"></i>
+                        <i class="fas fa-star text-amber-400 text-xs"></i>
+                        <i class="fas fa-star text-amber-400 text-xs"></i>
+                        <span class="ml-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ ${siswa.totalBintang.toFixed(1)}</span>
+                    `;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50/50 transition-colors border-b border-gray-100';
+                tr.innerHTML = `
+                    <td class="py-3 font-semibold text-gray-800">${medal}${siswa.nama}</td>
+                    <td class="py-3 text-gray-500 font-medium">Kelas ${siswa.kelas}</td>
+                    <td class="py-3 text-center font-bold text-eco-600">${siswa.totalPiket} Kali</td>
+                    <td class="py-3 text-right font-extrabold flex items-center justify-end h-full mt-2 gap-2">
+                        ${starIconsHTML}
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // MERENDER RIWAYAT KEHADIRAN PIKET & PENGHARGAAN
+        function renderPiketHistory() {
+            const body = document.getElementById('piket-history-body');
+            body.innerHTML = '';
+
+            if (appState.attendanceLogs.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-400">Belum ada riwayat piket.</td></tr>';
+                return;
+            }
+
+            appState.attendanceLogs.forEach(log => {
+                let statusBadge = '';
+                if (log.status === 'Hadir') {
+                    statusBadge = 'bg-emerald-100 text-emerald-800 font-bold';
+                } else if (log.status === 'Penghargaan') {
+                    statusBadge = 'bg-amber-100 text-amber-800 font-bold border border-amber-300';
+                } else if (log.status === 'Sakit') {
+                    statusBadge = 'bg-blue-100 text-blue-800';
+                } else {
+                    statusBadge = 'bg-gray-100 text-gray-800';
+                }
+
+                const dateFormatted = new Date(log.tanggal).toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'short'
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-50';
+                tr.innerHTML = `
+                    <td class="py-2.5 font-medium text-gray-400">${dateFormatted}</td>
+                    <td class="py-2.5 font-bold text-gray-800">${log.namaSiswa} <span class="text-[10px] text-gray-400 font-normal">(Kelas ${log.kelas})</span></td>
+                    <td class="py-2.5 text-xs text-gray-500 max-w-[200px] truncate">
+                        <span class="px-2 py-0.5 rounded-md text-[9px] mr-1.5 inline-block ${statusBadge}">
+                            ${log.status}
+                        </span>
+                        ${log.deskripsi || ''}
+                    </td>
+                    <td class="py-2.5 text-right font-black text-amber-600">${log.sampahKilo > 0 ? '⭐ ' + log.sampahKilo.toFixed(1) : '-'}</td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // ================= SELESAI FITUR PIKET =================
+
+        // Hapus Catatan Sampah Umum
+        function hapusCatatan(id) {
+            const logIndex = appState.logs.findIndex(log => log.id === id);
+            if (logIndex > -1) {
+                const log = appState.logs[logIndex];
+                appState.points = Math.max(0, appState.points - log.poin);
+                
+                appState.logs.splice(logIndex, 1);
+                saveState();
+                
+                updateGlobalPointsDisplay();
+                filterAndRenderHistory();
+                showToast("Catatan sampah berhasil dihapus.");
+            }
+        }
+
+        // Merender Dashboard Data & Statistik
+        function renderDashboard() {
+            let totalBerat = 0;
+            let beratOrganik = 0;
+            let beratAnorganik = 0;
+            let beratB3 = 0;
+
+            appState.logs.forEach(log => {
+                totalBerat += log.berat;
+                if (log.jenis === 'Organik') beratOrganik += log.berat;
+                else if (log.jenis === 'Anorganik') beratAnorganik += log.berat;
+                else if (log.jenis === 'B3') beratB3 += log.berat;
+            });
+
+            document.getElementById('dash-total-berat').innerText = `${totalBerat.toFixed(1)} kg`;
+            document.getElementById('dash-organik').innerText = `${beratOrganik.toFixed(1)} kg`;
+            document.getElementById('dash-anorganik').innerText = `${beratAnorganik.toFixed(1)} kg`;
+
+            const recentLogsContainer = document.getElementById('recent-logs-container');
+            recentLogsContainer.innerHTML = '';
+
+            const topLogs = appState.logs.slice(0, 3);
+            if (topLogs.length === 0) {
+                recentLogsContainer.innerHTML = `
+                    <div class="text-center py-6 text-gray-400 text-xs">
+                        Belum ada aktivitas terdaftar. Yuk, mulailah memilah sampah hari ini!
+                    </div>
+                `;
+                return;
+            }
+
+            topLogs.forEach(log => {
+                let badgeColor = '';
+                let iconClass = '';
+                if (log.jenis === 'Organik') {
+                    badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                    iconClass = 'fa-apple-alt text-emerald-600';
+                } else if (log.jenis === 'Anorganik') {
+                    badgeColor = 'bg-amber-50 text-amber-700 border-amber-100';
+                    iconClass = 'fa-wine-bottle text-amber-600';
+                } else {
+                    badgeColor = 'bg-rose-50 text-rose-700 border-rose-100';
+                    iconClass = 'fa-skull-crossbones text-rose-600';
+                }
+
+                const dateFormatted = new Date(log.tanggal).toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+
+                const logEl = document.createElement('div');
+                logEl.className = 'flex items-center justify-between p-3.5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100/50 transition-all';
+                logEl.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800 line-clamp-1">${log.deskripsi}</p>
+                            <span class="text-[10px] text-gray-400 font-medium">${dateFormatted}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-bold text-gray-800">${log.berat} kg</p>
+                        <span class="inline-block text-[9px] border px-2 py-0.5 rounded-full font-bold ${badgeColor}">
+                            +${log.poin} Poin
+                        </span>
+                    </div>
+                `;
+                recentLogsContainer.appendChild(logEl);
+            });
+        }
+
+        // Filter riwayat setoran sampah umum
+        function filterAndRenderHistory() {
+            const filterJenis = document.getElementById('filter-jenis').value;
+            const kataKunci = document.getElementById('cari-riwayat').value.toLowerCase();
+            const tableBody = document.getElementById('table-history-body');
+            const emptyState = document.getElementById('riwayat-empty');
+
+            tableBody.innerHTML = '';
+
+            let filteredLogs = appState.logs.filter(log => {
+                const cocokJenis = (filterJenis === 'Semua' || log.jenis === filterJenis);
+                const cocokKataKunci = log.deskripsi.toLowerCase().includes(kataKunci) || log.tanggal.includes(kataKunci);
+                return cocokJenis && cocokKataKunci;
+            });
+
+            if (filteredLogs.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filteredLogs.forEach(log => {
+                let badgeStyle = '';
+                if (log.jenis === 'Organik') badgeStyle = 'bg-emerald-100 text-emerald-800';
+                else if (log.jenis === 'Anorganik') badgeStyle = 'bg-amber-100 text-amber-800';
+                else badgeStyle = 'bg-rose-100 text-rose-800';
+
+                const dateFormatted = new Date(log.tanggal).toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3.5 pl-4 text-xs text-gray-500 font-medium">${dateFormatted}</td>
+                    <td class="py-3.5">
+                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-full ${badgeStyle}">
+                            ${log.jenis}
+                        </span>
+                    </td>
+                    <td class="py-3.5 text-xs font-semibold text-gray-800 max-w-xs truncate">${log.deskripsi}</td>
+                    <td class="py-3.5 text-xs font-bold text-gray-800">${log.berat} kg</td>
+                    <td class="py-3.5 text-right pr-4">
+                        <button onclick="hapusCatatan(${log.id})" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/50 w-7 h-7 rounded-lg transition-all" title="Hapus Catatan">
+                            <i class="fas fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Merender Toko Hadiah
+        function renderRewards() {
+            const container = document.getElementById('rewards-container');
+            container.innerHTML = '';
+
+            appState.rewards.forEach(reward => {
+                const bisaDitukar = appState.points >= reward.poin;
+                const buttonClass = bisaDitukar 
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md cursor-pointer' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed';
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="bg-gradient-to-br ${reward.bg} p-6 text-white text-center relative h-36 flex flex-col items-center justify-center">
+                            <div class="absolute top-3 right-3 text-white/30 text-xs font-bold">
+                                GREEN REWARD
+                            </div>
+                            <span class="text-4xl opacity-90 mb-2"><i class="fas ${reward.icon}"></i></span>
+                            <span class="text-[10px] tracking-widest font-bold bg-white/20 px-2.5 py-0.5 rounded-full uppercase">
+                                ${reward.poin} Poin
+                            </span>
+                        </div>
+                        <div class="p-5 space-y-2">
+                            <h3 class="font-bold text-gray-800 text-sm leading-tight">${reward.nama}</h3>
+                            <p class="text-[10px] text-gray-400">Dapatkan langsung kode unik voucer setelah penukaran poin berhasil.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-0">
+                        <button onclick="tukarHadiah(${reward.id})" class="w-full py-2.5 rounded-xl text-xs font-bold transition-all ${buttonClass}" ${!bisaDitukar ? 'disabled' : ''}>
+                            ${bisaDitukar ? 'Tukarkan Sekarang' : 'Poin Anda Kurang'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function tukarHadiah(rewardId) {
+            const reward = appState.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            if (appState.points >= reward.poin) {
+                appState.points -= reward.poin;
+                saveState();
+                updateGlobalPointsDisplay();
+                renderRewards();
+                showToast(`Sukses menukar! Kode Voucer Anda: GC-${Math.floor(100000 + Math.random() * 900000)}`);
+            } else {
+                showToast("Maaf, poin Anda tidak mencukupi untuk hadiah ini.", false);
+            }
+        }
+
+        // Menggambar grafik lingkaran
+        function initChart() {
+            const ctx = document.getElementById('wasteChart').getContext('2d');
+            
+            let dataOrganik = 0;
+            let dataAnorganik = 0;
+            let dataB3 = 0;
+
+            appState.logs.forEach(log => {
+                if (log.jenis === 'Organik') dataOrganik += log.berat;
+                else if (log.jenis === 'Anorganik') dataAnorganik += log.berat;
+                else if (log.jenis === 'B3') dataB3 += log.berat;
+            });
+
+            wasteChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Organik', 'Anorganik', 'B3'],
+                    datasets: [{
+                        data: [dataOrganik, dataAnorganik, dataB3],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!wasteChartInstance) return;
+
+            let dataOrganik = 0;
+            let dataAnorganik = 0;
+            let dataB3 = 0;
+
+            appState.logs.forEach(log => {
+                if (log.jenis === 'Organik') dataOrganik += log.berat;
+                else if (log.jenis === 'Anorganik') dataAnorganik += log.berat;
+                else if (log.jenis === 'B3') dataB3 += log.berat;
+            });
+
+            wasteChartInstance.data.datasets[0].data = [dataOrganik, dataAnorganik, dataB3];
+            wasteChartInstance.update();
+        }
+
+        // ================= KUIS ECO ENGINE =================
+
+        function startQuiz() {
+            kuisState.currentIndex = 0;
+            kuisState.score = 0;
+
+            document.getElementById('quiz-start-screen').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.add('hidden');
+            document.getElementById('quiz-play-screen').classList.remove('hidden');
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const totalPertanyaan = kuisDatabase.length;
+            const progressPercent = ((kuisState.currentIndex + 1) / totalPertanyaan) * 100;
+            document.getElementById('quiz-progress').style.width = `${progressPercent}%`;
+
+            document.getElementById('quiz-counter').innerText = `${kuisState.currentIndex + 1} dari ${totalPertanyaan}`;
+
+            const q = kuisDatabase[kuisState.currentIndex];
+            document.getElementById('quiz-question-text').innerText = q.pertanyaan;
+
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+
+            q.opsi.forEach((opsi, index) => {
+                const optButton = document.createElement('button');
+                optButton.className = 'w-full text-left p-4 border-2 border-gray-100 hover:border-eco-500 hover:bg-eco-50/20 rounded-2xl text-xs font-semibold text-gray-700 transition-all flex items-center space-x-3 group';
+                optButton.innerHTML = `
+                    <span class="w-7 h-7 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center font-bold text-[10px] text-gray-500 group-hover:bg-eco-500 group-hover:text-white transition-all">
+                        ${String.fromCharCode(65 + index)}
+                    </span>
+                    <span class="flex-grow">${opsi}</span>
+                `;
+                optButton.onclick = () => checkQuizAnswer(index);
+                optionsContainer.appendChild(optButton);
+            });
+        }
+
+        function checkQuizAnswer(selectedIdx) {
+            const q = kuisDatabase[kuisState.currentIndex];
+            if (selectedIdx === q.jawabanBenar) {
+                kuisState.score++;
+            }
+
+            if (kuisState.currentIndex + 1 < kuisDatabase.length) {
+                kuisState.currentIndex++;
+                renderQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-play-screen').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.remove('hidden');
+
+            const isPerfect = kuisState.score === kuisDatabase.length;
+            const rIcon = document.getElementById('quiz-result-icon');
+            const rTitle = document.getElementById('quiz-result-title');
+            const rDesc = document.getElementById('quiz-result-desc');
+
+            if (isPerfect) {
+                rIcon.className = 'w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner text-3xl animate-bounce';
+                rIcon.innerHTML = '<i class="fas fa-circle-check"></i>';
+                rTitle.innerText = 'Nilai Sempurna! 🎉';
+                rDesc.innerHTML = 'Selamat! Semua jawaban Anda benar. Anda mendapatkan bonus tambahan <strong>+20 Poin</strong>!';
+                
+                appState.points += 20;
+                saveState();
+                updateGlobalPointsDisplay();
+            } else {
+                rIcon.className = 'w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-inner text-3xl';
+                rIcon.innerHTML = '<i class="fas fa-medal"></i>';
+                rTitle.innerText = 'Usaha yang Bagus!';
+                rDesc.innerHTML = `Anda berhasil menjawab benar sebanyak <strong>${kuisState.score} dari ${kuisDatabase.length}</strong> pertanyaan. Tingkatkan terus pengetahuan ecologimu!`;
+            }
+        }
+
+        function resetQuiz() {
+            document.getElementById('quiz-result-screen').classList.add('hidden');
+            document.getElementById('quiz-start-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
